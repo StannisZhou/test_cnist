@@ -1,2 +1,0 @@
-model_checkpoint_path: "/users/dlinsley/cluttered_nist_experiments/checkpoints/nist_3_ix2v2_50k_2019_01_18_17_47_22_447365/model_8000.ckpt-8000"
-all_model_checkpoint_paths: "/users/dlinsley/cluttered_nist_experiments/checkpoints/nist_3_ix2v2_50k_2019_01_18_17_47_22_447365/model_8000.ckpt-8000"
