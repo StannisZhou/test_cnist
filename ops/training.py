@@ -6,8 +6,7 @@ from datetime import datetime
 import numpy as np
 
 import tensorflow as tf
-
-# from ops import data_to_tfrecords
+from ops import data_to_tfrecords
 from tqdm import tqdm
 from utils import logger, py_utils
 
@@ -89,7 +88,8 @@ def validation_step(
     start_time = time.time()
     if val_batch_idx:
         shuff_val_batch_idx = val_batch_idx[np.random.permutation(len(val_batch_idx))]
-    for num_vals in range(config.validation_steps):
+
+    for num_vals in tqdm(range(config.validation_steps)):
         # Validation accuracy as the average of n batches
         if val_images:
             it_idx = shuff_val_batch_idx == num_vals
