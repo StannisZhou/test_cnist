@@ -9,8 +9,10 @@ class Config:
 
     def __init__(self, **kwargs):
         """Global config file for normalization experiments."""
-        self.data_root = '/home/stannis/data_cifs/image_datasets/'
-        self.project_directory = '/home/stannis/data_cifs/cluttered_nist_experiments/'
+        self.data_root = '/storage/users/stannis/data_cifs/image_datasets/'
+        self.project_directory = (
+            '/storage/users/stannis/data_cifs/cluttered_nist_experiments/'
+        )
         self.tf_records = os.path.join(self.project_directory, 'tf_records')
         self.checkpoints = os.path.join(self.project_directory, 'checkpoints')
         self.summaries = os.path.join(self.project_directory, 'summaries')
