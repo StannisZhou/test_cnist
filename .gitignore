@@ -9,9 +9,7 @@ __pycache__
 dist/
 *.egg-info/
 build/
-config.py
 .idea/
-db/credentials.py
 *.png
 *.pdf
 
