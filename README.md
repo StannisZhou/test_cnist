@@ -1,3 +1,20 @@
+# Updated README
+
+Relevant datasets are:
+	- `datasets/cluttered_nist_3_baselinev2_50k.py`
+	- `datasets/cluttered_nist_3_ix1v2_50k.py`
+	- `datasets/cluttered_nist_3_ix2_50k.py`
+
+Relevant experiments are:
+	- `experiments/nist_3_baselinev2_50k.py`
+	- `experiments/nist_3_ix1v2_50k.py`
+	- `experiments/nist_3_ix2v2_50k.py`
+
+Example command:
+	- `python encode_dataset.py --dataset=cluttered_nist_3_ix1v2_50k`
+	- `python run_job.py --no_db --experiment=nist_3_ix1v2_50k --model=h_td_fgru --train=cluttered_nist_3_ix1v2_50k --val=cluttered_nist_3_ix1v2_50k`
+
+# Original README
 0. Configure environment and DB.
 	- Copy `config.py.template` to `config.py` and fill in missing entries to reflect your system.
 	- Do the same for `db/credentials.py`
