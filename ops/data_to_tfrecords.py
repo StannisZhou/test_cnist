@@ -1,5 +1,6 @@
 """Routines for encoding data into TFrecords."""
 import numpy as np
+
 import tensorflow as tf
 from scipy import misc
 from tqdm import tqdm
@@ -61,24 +62,24 @@ def encode_tf(encoder, x):
 
 
 def data_to_tfrecords(
-        files,
-        labels,
-        targets,
-        nhot,
-        ds_name,
-        im_size,
-        label_size,
-        preprocess,
-        store_z=False,
-        normalize_im=False,
-        it_ds_name=None,
-        repeat_image=False):
+    files,
+    labels,
+    targets,
+    nhot,
+    ds_name,
+    im_size,
+    label_size,
+    preprocess,
+    store_z=False,
+    normalize_im=False,
+    it_ds_name=None,
+    repeat_image=False,
+):
     """Convert dataset to tfrecords."""
     print 'Building dataset: %s' % ds_name
     for idx, ((fk, fv), (lk, lv)) in enumerate(
-        zip(
-            files.iteritems(),
-            labels.iteritems())):
+        zip(files.iteritems(), labels.iteritems())
+    ):
         if it_ds_name is None:
             it_ds_name = '%s_%s.tfrecords' % (ds_name, fk)
         if store_z:
@@ -93,9 +94,8 @@ def data_to_tfrecords(
         with tf.python_io.TFRecordWriter(it_ds_name) as tfrecord_writer:
             image_count = 0
             for f_idx, (it_f, it_l) in tqdm(
-                    enumerate(zip(fv, lv)),
-                    total=len(fv),
-                    desc='Building %s' % fk):
+                enumerate(zip(fv, lv)), total=len(fv), desc='Building %s' % fk
+            ):
                 example = None
                 try:
                     if isinstance(it_f, basestring):
@@ -103,13 +103,10 @@ def data_to_tfrecords(
                             image = np.load(it_f)
                         else:
                             image = load_image(
-                                it_f,
-                                im_size,
-                                repeat_image=repeat_image).astype(np.float32)
+                                it_f, im_size, repeat_image=repeat_image
+                            ).astype(np.float32)
                         if len(image.shape) > 1:
-                            image = preprocess_image(
-                                image, preprocess,
-                                im_size)
+                            image = preprocess_image(image, preprocess, im_size)
                     else:
                         raise NotImplementedError
                         image = preprocess_image(it_f, preprocess, im_size)
@@ -124,26 +121,20 @@ def data_to_tfrecords(
                             label = np.load(it_l)
                         else:
                             label = load_image(
-                                it_l,
-                                label_size,
-                                repeat_image=False).astype(np.float32)
+                                it_l, label_size, repeat_image=False
+                            ).astype(np.float32)
                         if len(label.shape) > 1:
-                            label = preprocess_image(
-                                label, preprocess, label_size)
+                            label = preprocess_image(label, preprocess, label_size)
                     else:
                         label = it_l
-                        if isinstance(
-                                label, np.ndarray) and len(label.shape) > 1:
-                            label = preprocess_image(
-                                label, preprocess, label_size)
+                        if isinstance(label, np.ndarray) and len(label.shape) > 1:
+                            label = preprocess_image(label, preprocess, label_size)
                     data_dict = {
                         'image': encode_tf(targets['image'], image),
-                        'label': encode_tf(targets['label'], label)
+                        'label': encode_tf(targets['label'], label),
                     }
                     if use_nhot:
-                        data_dict['nhot'] = encode_tf(
-                            targets['nhot'],
-                            f_nhot[f_idx])
+                        data_dict['nhot'] = encode_tf(targets['nhot'], f_nhot[f_idx])
                     example = create_example(data_dict)
                 except Exception:
                     pass
@@ -159,13 +150,13 @@ def data_to_tfrecords(
                 means = np.asarray(means).reshape(len(means), -1)
                 np.savez(
                     '%s_%s_means' % (ds_name, fk),
-                    image={
-                        'mean': means.mean(),
-                        'std': means.std()
-                    })
+                    image={'mean': means.mean(), 'std': means.std()},
+                )
             else:
-                np.save(
-                    '%s_%s_means' % (ds_name, fk), means / float(image_count))
+                np.save('%s_%s_means' % (ds_name, fk), means / float(image_count))
             print 'Finished %s with %s images (dropped %s)' % (
-                it_ds_name, image_count, len(fv) - image_count)
+                it_ds_name,
+                image_count,
+                len(fv) - image_count,
+            )
             it_ds_name = None

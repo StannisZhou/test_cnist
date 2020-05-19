@@ -1,5 +1,7 @@
 import os
+
 import numpy as np
+
 import tensorflow as tf
 from config import Config
 from ops import tf_fun
@@ -11,7 +13,9 @@ class data_processing(object):
         self.output_name = 'cluttered_nist_3_ix2v2_50k'
         self.data_name = 'ix2'
         self.img_dir = 'imgs'
-        self.contour_dir = '/media/data_cifs/cluttered_nist3/'
+        self.contour_dir = (
+            '/storage/users/stannis/data/cabc_full/media/data_cifs/cluttered_nist3/'
+        )
         self.im_extension = '.png'
         self.label_regex = r'(?<=length)\d+'
         self.config = Config()
@@ -29,51 +33,32 @@ class data_processing(object):
         self.input_normalization = 'none'  # 'zscore'
         self.preprocess = ['resize']  # ['resize_nn']
         self.meta = os.path.join('metadata', 'combined.npy')
-        self.folds = {
-            'train': 'train',
-            'val': 'val'
-        }
+        self.folds = {'train': 'train', 'val': 'val'}
         self.cv_split = 0.9
         self.cv_balance = True
-        self.targets = {
-            'image': tf_fun.bytes_feature,
-            'label': tf_fun.int64_feature
-        }
+        self.targets = {'image': tf_fun.bytes_feature, 'label': tf_fun.int64_feature}
         self.tf_dict = {
             'image': tf_fun.fixed_len_feature(dtype='string'),
-            'label': tf_fun.fixed_len_feature(dtype='int64')
+            'label': tf_fun.fixed_len_feature(dtype='int64'),
         }
         self.tf_reader = {
-            'image': {
-                'dtype': tf.float32,
-                'reshape': self.im_size
-            },
-            'label': {
-                'dtype': tf.int64,
-                'reshape': self.output_size
-            }
+            'image': {'dtype': tf.float32, 'reshape': self.im_size},
+            'label': {'dtype': tf.int64, 'reshape': self.output_size},
         }
 
     def list_files(self, meta, directory, cat=0):
         """List files from metadata."""
         files, labs = [], []
         for f in meta:
-            files += [
-                os.path.join(
-                    self.contour_dir,
-                    directory,
-                    f[cat],
-                    f[2])]
+            files += [os.path.join(self.contour_dir, directory, f[cat], f[2])]
             labs += [int(f[4])]
         return np.asarray(files), np.asarray(labs)
 
     def get_data(self):
         """Get the names of files."""
         positive_meta = np.load(
-            os.path.join(
-                self.contour_dir,
-                self.data_name,
-                self.meta))
+            os.path.join(self.contour_dir, self.data_name, self.meta)
+        )
         ims, labs = self.list_files(positive_meta, self.data_name, cat=0)
         # labs = self.list_files(positive_meta, self.data_name, cat=1)
         rand_idx = np.random.permutation(len(ims))
@@ -83,8 +68,8 @@ class data_processing(object):
         all_labels = labs[rand_idx]
 
         if self.max_ims:
-            all_ims = all_ims[:self.max_ims]
-            all_labels = all_labels[:self.max_ims]
+            all_ims = all_ims[: self.max_ims]
+            all_labels = all_labels[: self.max_ims]
         num_ims = len(all_ims)
 
         # Create CV folds
