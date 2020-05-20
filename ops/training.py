@@ -5,12 +5,12 @@ from datetime import datetime
 
 import numpy as np
 
+#  from db import db
+import joblib
 import tensorflow as tf
 from ops import data_to_tfrecords
 from tqdm import tqdm
 from utils import logger, py_utils
-
-# from db import db
 
 
 def val_status(
@@ -166,19 +166,37 @@ def save_progress(
         np.savez(
             os.path.join(config.results, '%s_val_gradients' % exp_label), **it_val_dict
         )
-    db.update_performance(
-        experiment_id=config._id,
-        experiment=config.experiment,
-        train_score=float(train_score),
-        train_loss=float(train_loss),
-        val_score=float(val_score),
-        val_loss=float(val_loss),
-        step=step,
-        num_params=int(num_params),
-        ckpt_path=ckpt_path,
-        results_path=config.results,
-        summary_path=directories['summaries'],
+
+    joblib.dump(
+        dict(
+            experiment_id=config._id,
+            experiment=config.experiment,
+            train_score=float(train_score),
+            train_loss=float(train_loss),
+            val_score=float(val_score),
+            val_loss=float(val_loss),
+            step=step,
+            num_params=int(num_params),
+            ckpt_path=ckpt_path,
+            results_path=config.results,
+            summary_path=directories['summaries'],
+        ),
+        os.path.join(directories['checkpoints'], 'model_info_%s.joblib' % step),
+        compress=3,
     )
+    # db.update_performance(
+    #     experiment_id=config._id,
+    #     experiment=config.experiment,
+    #     train_score=float(train_score),
+    #     train_loss=float(train_loss),
+    #     val_score=float(val_score),
+    #     val_loss=float(val_loss),
+    #     step=step,
+    #     num_params=int(num_params),
+    #     ckpt_path=ckpt_path,
+    #     results_path=config.results,
+    #     summary_path=directories['summaries'],
+    # )
 
     # Summaries
     summary_str = sess.run(summary_op)
