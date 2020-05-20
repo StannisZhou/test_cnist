@@ -288,7 +288,7 @@ def training_loop(
 
                     # Save progress and important data
                     try:
-                        val_check = np.where(val_lo < val_perf)[0]
+                        val_check = val_lo < np.min(val_perf)
                         save_progress(
                             config=config,
                             val_check=val_check,
@@ -357,7 +357,7 @@ def training_loop(
 
                     # Save progress and important data
                     try:
-                        val_check = np.where(val_lo < val_perf)[0]
+                        val_check = val_lo < np.min(val_perf)
                         save_progress(
                             config=config,
                             val_check=val_check,
@@ -397,6 +397,7 @@ def training_loop(
                         val_score=val_score,
                         summary_dir=directories['summaries'],
                     )
+                    val_perf = np.concatenate([val_perf, [val_lo]])
                 else:
                     # Training status
                     train_status(
@@ -411,7 +412,6 @@ def training_loop(
                     )
 
                 # End iteration
-                val_perf = np.concatenate([val_perf, [val_lo]])
                 step += 1
         except tf.errors.OutOfRangeError:
             log.info('Done training for %d epochs, %d steps.' % (config.epochs, step))
