@@ -38,7 +38,7 @@ def build_model(data_tensor, reuse, training, output_shape):
                 'intermediate_repeats': [3, 3],
                 'while_loop': False,
                 'skip': False,
-                'symmetric_weights': True,
+                'symmetric_weights': False,
                 'include_pooling': True,
             },
             pool_strides=[2, 2],
