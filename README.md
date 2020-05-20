@@ -12,10 +12,16 @@
 - `experiments/nist_3_ix1v2_50k.py`
 - `experiments/nist_3_ix2v2_50k.py`
 
+## Relevant models are:
+
+- `models/htd_fgru.py`
+- `models/h_fgru.py`
+- `models/td_fgru.py`
+
 ## Example command:
 
 - `python encode_dataset.py --dataset=cluttered_nist_3_ix2v2_50k`
-- `python run_job.py --no_db --experiment=nist_3_ix2v2_50k --model=h_td_fgru --train=cluttered_nist_3_ix2v2_50k --val=cluttered_nist_3_ix2v2_50k`
+- `python run_job.py --no_db --experiment=nist_3_ix2v2_50k --model=htd_fgru --train=cluttered_nist_3_ix2v2_50k --val=cluttered_nist_3_ix2v2_50k`
 
 # Original README
 0. Configure environment and DB.

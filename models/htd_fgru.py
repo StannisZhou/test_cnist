@@ -26,7 +26,7 @@ def build_model(data_tensor, reuse, training, output_shape):
             'fgru',
             x_shape=in_emb.get_shape().as_list(),
             timesteps=8,
-            h_ext=[{'h1': [1, 1]}, {'h2': [1, 1]}, {'fb1': [1, 1]}],
+            h_ext=[{'h1': [20, 20]}, {'h2': [1, 1]}, {'fb1': [1, 1]}],
             strides=[1, 1, 1, 1],
             hgru_ids=[{'h1': 20}, {'h2': 128}, {'fb1': 20}],
             hgru_idx=[{'h1': 0}, {'h2': 1}, {'fb1': 2}],

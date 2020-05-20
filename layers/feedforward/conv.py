@@ -1,28 +1,35 @@
 import numpy as np
+
 import tensorflow as tf
-from layers.feedforward import normalization
-from layers.feedforward import pooling
+from layers.feedforward import normalization, pooling
 
 
 def input_layer(
-        X,
-        reuse,
-        training,
-        features,
-        conv_kernel_size,
-        pool_kernel_size=False,
-        pool_kernel_strides=False,
-        name='l0',
-        conv_strides=(1, 1),
-        conv_padding='same',
-        conv_activation=tf.nn.relu,
-        var_scope='input_1',
-        pool=False,
-        pool_type='max'):
+    X,
+    reuse,
+    training,
+    features,
+    conv_kernel_size,
+    pool_kernel_size=False,
+    pool_kernel_strides=False,
+    name='l0',
+    conv_strides=(1, 1),
+    conv_padding='same',
+    conv_activation=tf.nn.relu,
+    var_scope='input_1',
+    pool=False,
+    renorm=False,
+    pool_type='max',
+):
     """Input layer for recurrent experiments in Kim et al., 2019."""
     if not pool_kernel_size or not pool_kernel_strides:
         pool = False
     with tf.variable_scope(var_scope, reuse=reuse):
+        if isinstance(conv_activation, list):
+            act_0 = conv_activation[0]
+        else:
+            act_0 = conv_activation
+
         in_emb = tf.layers.conv2d(
             inputs=X,
             filters=features,
@@ -30,18 +37,29 @@ def input_layer(
             name='conv_0_%s' % name,
             strides=conv_strides,
             padding=conv_padding,
-            activation=conv_activation,
+            activation=act_0,
             trainable=training,
-            use_bias=True)
+            use_bias=True,
+        )
+        # in_emb = normalization.batch(
+        #     bottom=in_emb,
+        #     name='input_layer_bn_0',
+        #     renorm=renorm,
+        #     training=training)
         if pool:
             if pool_type == 'max':
                 in_emb = pooling.max_pool(
                     bottom=in_emb,
                     name='pool_%s' % name,
                     k=pool_kernel_size,
-                    s=pool_kernel_strides)
+                    s=pool_kernel_strides,
+                )
             else:
                 raise NotImplementedError
+        if isinstance(conv_activation, list):
+            act_1 = conv_activation[1]
+        else:
+            act_1 = conv_activation
         in_emb = tf.layers.conv2d(
             inputs=in_emb,
             filters=features,
@@ -49,27 +67,77 @@ def input_layer(
             name='conv_1_%s' % name,
             strides=conv_strides,
             padding=conv_padding,
+            activation=act_1,
+            trainable=training,
+            use_bias=False,
+        )
+        in_emb = normalization.batch(
+            bottom=in_emb, name='input_layer_bn_1', renorm=renorm, training=training
+        )
+    return in_emb
+
+
+def input_layer_v2(
+    X,
+    reuse,
+    training,
+    features,
+    conv_kernel_size,
+    pool_kernel_size=False,
+    pool_kernel_strides=False,
+    name='l0',
+    conv_strides=(1, 1),
+    conv_padding='same',
+    conv_activation=tf.nn.relu,
+    var_scope='input_1',
+    pool=False,
+    pool_type='max',
+):
+    """Input layer for recurrent experiments in Kim et al., 2019."""
+    if not pool_kernel_size or not pool_kernel_strides:
+        pool = False
+    with tf.variable_scope(var_scope, reuse=reuse):
+        assert not isinstance(conv_activation, list), 'Pass a single activation fun.'
+        in_emb = tf.layers.conv2d(
+            inputs=X,
+            filters=features,
+            kernel_size=conv_kernel_size,
+            name='conv_0_%s' % name,
+            strides=conv_strides,
+            padding=conv_padding,
             activation=conv_activation,
             trainable=training,
-            use_bias=True)
+            use_bias=True,
+        )
+        if pool:
+            if pool_type == 'max':
+                in_emb = pooling.max_pool(
+                    bottom=in_emb,
+                    name='pool_%s' % name,
+                    k=pool_kernel_size,
+                    s=pool_kernel_strides,
+                )
+            else:
+                raise NotImplementedError
     return in_emb
 
 
 def skinny_input_layer(
-        X,
-        reuse,
-        training,
-        features,
-        conv_kernel_size,
-        pool_kernel_size=False,
-        pool_kernel_strides=False,
-        name='l0',
-        conv_strides=(1, 1),
-        conv_padding='same',
-        conv_activation=tf.nn.relu,
-        var_scope='input_1',
-        pool=False,
-        pool_type='max'):
+    X,
+    reuse,
+    training,
+    features,
+    conv_kernel_size,
+    pool_kernel_size=False,
+    pool_kernel_strides=False,
+    name='l0',
+    conv_strides=(1, 1),
+    conv_padding='same',
+    conv_activation=tf.nn.relu,
+    var_scope='input_1',
+    pool=False,
+    pool_type='max',
+):
     """Input layer for recurrent experiments in Kim et al., 2019."""
     if not pool_kernel_size or not pool_kernel_strides:
         pool = False
@@ -83,29 +151,24 @@ def skinny_input_layer(
             padding=conv_padding,
             activation=conv_activation,
             trainable=training,
-            use_bias=True)
+            use_bias=True,
+        )
         if pool:
             if pool_type == 'max':
                 in_emb = pooling.max_pool(
                     bottom=in_emb,
                     name='pool_%s' % name,
                     k=pool_kernel_size,
-                    s=pool_kernel_strides)
+                    s=pool_kernel_strides,
+                )
             else:
                 raise NotImplementedError
     return in_emb
 
 
-def readout_layer(
-        activity,
-        reuse,
-        training,
-        output_shape,
-        var_scope='readout_1',
-        pool_type='max',
-        renorm=True,
-        features=2):
-    """Readout layer for recurrent experiments in Kim et al., 2019."""
+def seg_readout_layer(
+    activity, reuse, training, output_shape, var_scope='readout_1', features=2
+):
     with tf.variable_scope(var_scope, reuse=reuse):
         activity = conv_layer(
             bottom=activity,
@@ -113,40 +176,100 @@ def readout_layer(
             num_filters=features,
             kernel_size=1,
             trainable=training,
-            use_bias=False)
-        pool_aux = {'pool_type': pool_type}
-        activity = pooling.global_pool(
-            bottom=activity,
-            name='pre_readout_pool',
-            aux=pool_aux)
-        activity = normalization.batch(
-            bottom=activity,
-            renorm=True,
-            name='readout_1_bn',
-            training=training)
-
-    with tf.variable_scope('readout_2', reuse=reuse):
-        activity = tf.layers.flatten(
-            activity,
-            name='flat_readout')
-        activity = tf.layers.dense(
-            inputs=activity,
-            units=output_shape)
+            use_bias=True,
+        )
     return activity
 
 
+def readout_layer(
+    activity,
+    reuse,
+    training,
+    output_shape,
+    dtype=tf.float32,
+    var_scope='readout_1',
+    pool_type='max',
+    renorm=False,
+    features=2,
+):
+    """Readout layer for recurrent experiments in Kim et al., 2019."""
+    with tf.variable_scope(var_scope, reuse=reuse):
+        activity = tf.layers.conv2d(
+            inputs=activity,
+            filters=features,
+            kernel_size=1,
+            name='pre_readout_conv',
+            strides=(1, 1),
+            padding='same',
+            activation=None,
+            trainable=training,
+            use_bias=True,
+        )
+        pool_aux = {'pool_type': pool_type}
+        activity = pooling.global_pool(
+            bottom=activity, name='pre_readout_pool', aux=pool_aux
+        )
+        activity = normalization.batch_contrib(
+            bottom=activity,
+            renorm=renorm,
+            dtype=dtype,
+            name='readout_1_bn',
+            training=training,
+        )
+    with tf.variable_scope('readout_2', reuse=reuse):
+        activity = tf.layers.flatten(activity, name='flat_readout')
+        activity = tf.layers.dense(inputs=activity, units=output_shape)
+    return activity
+
+
+def get_bilinear_filter(
+    name, filter_shape, upscale_factor, trainable, dtype=tf.float32
+):
+    """Create bilinear filters for transpose conv.
+    Filter_shape is [width, height, num_in_channels, num_out_channels]."""
+
+    kernel_size = filter_shape[1]
+    # Centre location of the filter for which value is calculated
+    if kernel_size % 2 == 1:
+        centre_location = upscale_factor - 1
+    else:
+        centre_location = upscale_factor - 0.5
+
+    bilinear = np.zeros([filter_shape[0], filter_shape[1]])
+    for x in range(filter_shape[0]):
+        for y in range(filter_shape[1]):
+            # Interpolation Calculation
+            value = (1 - abs((x - centre_location) / upscale_factor)) * (
+                1 - abs((y - centre_location) / upscale_factor)
+            )
+            bilinear[x, y] = value
+    weights = np.zeros(filter_shape)
+    for i in range(filter_shape[2]):
+        weights[:, :, i, i] = bilinear
+    init = tf.constant_initializer(value=weights, dtype=dtype)
+    bilinear_weights = tf.get_variable(
+        name=name,
+        initializer=init,
+        shape=weights.shape,
+        trainable=trainable,
+        dtype=dtype,
+    )
+    return bilinear_weights
+
+
 def conv_layer(
-        bottom,
-        name,
-        num_filters=None,
-        kernel_size=None,
-        stride=[1, 1, 1, 1],
-        padding='SAME',
-        trainable=True,
-        use_bias=True,
-        reuse=False,
-        data_format='NHWC',
-        aux={}):
+    bottom,
+    name,
+    num_filters=None,
+    kernel_size=None,
+    stride=[1, 1, 1, 1],
+    padding='SAME',
+    trainable=True,
+    use_bias=True,
+    reuse=False,
+    data_format='NHWC',
+    aux={},
+):
     """2D convolutional layer with pretrained weights."""
     if data_format == 'NHWC':
         chd = -1
@@ -176,7 +299,8 @@ def conv_layer(
                 name='%s_conv_bias' % name,
                 initializer=tf.zeros_initializer(),
                 shape=bias_shape,
-                trainable=trainable)
+                trainable=trainable,
+            )
         if transpose_inds:
             kernel_initializer = kernel_initializer.transpose(transpose_inds)
         kernel_size = kernel_initializer.shape[0]
@@ -191,19 +315,22 @@ def conv_layer(
             kernel_spec = [kernel_size, kernel_size, in_ch, num_filters]
             kernel_initializer = [
                 kernel_spec,
-                tf.contrib.layers.xavier_initializer(uniform=False)]
+                tf.contrib.layers.xavier_initializer(uniform=False),
+            ]
         pretrained = False
     if pretrained:
         filters = tf.get_variable(
             name='%s_pretrained' % name,
             initializer=kernel_initializer,
-            trainable=trainable)
+            trainable=trainable,
+        )
     else:
         filters = tf.get_variable(
             name='%s_initialized' % name,
             shape=kernel_initializer[0],
             initializer=kernel_initializer[1],
-            trainable=trainable)
+            trainable=trainable,
+        )
         if use_bias:
             if data_format == 'NHWC':
                 bias_shape = tf.zeros([1, 1, 1, num_filters])
@@ -212,15 +339,11 @@ def conv_layer(
             else:
                 raise NotImplementedError(data_format)
             bias = tf.get_variable(
-                name='%s_bias' % name,
-                initializer=bias_shape,
-                trainable=trainable)
+                name='%s_bias' % name, initializer=bias_shape, trainable=trainable
+            )
     activity = tf.nn.conv2d(
-        bottom,
-        filters,
-        strides=stride,
-        padding='SAME',
-        data_format=data_format)
+        bottom, filters, strides=stride, padding='SAME', data_format=data_format
+    )
     if use_bias:
         activity += bias
     if 'nonlinearity' in aux.keys():
@@ -234,18 +357,19 @@ def conv_layer(
 
 
 def down_block(
-        layer_name,
-        bottom,
-        reuse,
-        kernel_size,
-        num_filters,
-        training,
-        stride=(1, 1),
-        padding='same',
-        data_format='channels_last',
-        renorm=False,
-        use_bias=False,
-        include_pool=True):
+    layer_name,
+    bottom,
+    reuse,
+    kernel_size,
+    num_filters,
+    training,
+    stride=(1, 1),
+    padding='same',
+    data_format='channels_last',
+    renorm=False,
+    use_bias=False,
+    include_pool=True,
+):
     """Forward block for seung model."""
     with tf.variable_scope('%s_block' % layer_name, reuse=reuse):
         with tf.variable_scope('%s_layer_1' % layer_name, reuse=reuse):
@@ -258,13 +382,15 @@ def down_block(
                 padding=padding,
                 data_format=data_format,
                 trainable=training,
-                use_bias=use_bias)
+                use_bias=use_bias,
+            )
             x = normalization.batch(
                 bottom=x,
                 name='%s_bn_1' % layer_name,
                 data_format=data_format,
                 renorm=renorm,
-                training=training)
+                training=training,
+            )
             x = tf.nn.elu(x)
             skip = tf.identity(x)
 
@@ -278,13 +404,15 @@ def down_block(
                 padding=padding,
                 data_format=data_format,
                 trainable=training,
-                use_bias=use_bias)
+                use_bias=use_bias,
+            )
             x = normalization.batch(
                 bottom=x,
                 name='%s_bn_2' % layer_name,
                 data_format=data_format,
                 renorm=renorm,
-                training=training)
+                training=training,
+            )
             x = tf.nn.elu(x)
 
         with tf.variable_scope('%s_layer_3' % layer_name, reuse=reuse):
@@ -298,14 +426,16 @@ def down_block(
                 data_format=data_format,
                 trainable=training,
                 activation=tf.nn.elu,
-                use_bias=use_bias)
+                use_bias=use_bias,
+            )
             x = x + skip
             x = normalization.batch(
                 bottom=x,
                 name='%s_bn_3' % layer_name,
                 data_format=data_format,
                 renorm=renorm,
-                training=training)
+                training=training,
+            )
 
         if include_pool:
             with tf.variable_scope('%s_pool' % layer_name, reuse=reuse):
@@ -315,22 +445,24 @@ def down_block(
                     strides=(2, 2),
                     padding=padding,
                     data_format='channels_last',
-                    name='%s_pool' % layer_name)
+                    name='%s_pool' % layer_name,
+                )
     return x
 
 
 def up_block(
-        layer_name,
-        bottom,
-        skip_activity,
-        reuse,
-        kernel_size,
-        num_filters,
-        training,
-        stride=[2, 2],
-        padding='same',
-        renorm=False,
-        use_bias=False):
+    layer_name,
+    bottom,
+    skip_activity,
+    reuse,
+    kernel_size,
+    num_filters,
+    training,
+    stride=[2, 2],
+    padding='same',
+    renorm=False,
+    use_bias=False,
+):
     """Forward block for seung model."""
     with tf.variable_scope('%s_block' % layer_name, reuse=reuse):
         with tf.variable_scope('%s_layer_1' % layer_name, reuse=reuse):
@@ -342,12 +474,43 @@ def up_block(
                 strides=stride,
                 padding=padding,
                 trainable=training,
-                use_bias=use_bias)
+                use_bias=use_bias,
+            )
             x = x + skip_activity  # Rethink if this is valid
             x = normalization.batch(
-                bottom=x,
-                name='%s_bn_1' % layer_name,
-                renorm=renorm,
-                training=training)
+                bottom=x, name='%s_bn_1' % layer_name, renorm=renorm, training=training
+            )
             x = tf.nn.elu(x)
+    return x
+
+
+def up_layer(
+    layer_name,
+    bottom,
+    reuse,
+    kernel_size,
+    num_filters,
+    training,
+    stride=[2, 2],
+    padding='same',
+    renorm=False,
+    use_bias=True,
+):
+    """Wrapper for transpose convolutions."""
+    with tf.variable_scope('%s_block' % layer_name, reuse=reuse):
+        with tf.variable_scope('%s_layer' % layer_name, reuse=reuse):
+            x = tf.layers.conv2d_transpose(
+                inputs=bottom,
+                filters=num_filters,
+                kernel_size=kernel_size,
+                name=layer_name,
+                strides=stride,
+                padding=padding,
+                trainable=training,
+                use_bias=use_bias,
+            )
+            x = tf.nn.elu(x)
+            x = normalization.batch(
+                bottom=x, name='%s_bn' % layer_name, renorm=renorm, training=training
+            )
     return x

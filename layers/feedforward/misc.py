@@ -16,4 +16,5 @@ def resize(x, size, method, align_corners=True, preserve_aspect_ratio=True):
         size=size,
         method=method,
         align_corners=align_corners,
-        preserve_aspect_ratio=preserve_aspect_ratio)
+        preserve_aspect_ratio=preserve_aspect_ratio,
+    )
