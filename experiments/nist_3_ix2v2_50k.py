@@ -8,12 +8,8 @@ def experiment_params():
 
     # Experiment params. All below this line need to be in lists.
     exp['experiment'] = [__file__.split(os.path.sep)[-1].split('.')[0]]
-    exp['train_dataset'] = [
-        'cluttered_nist_3_ix2v2_50k',
-    ]
-    exp['val_dataset'] = [
-        'cluttered_nist_3_ix2v2_50k',
-    ]
+    exp['train_dataset'] = ['cluttered_nist_3_ix2v2_50k']
+    exp['val_dataset'] = ['cluttered_nist_3_ix2v2_50k']
     exp['model'] = [
         'resnet_18',
         'resnet_50',
@@ -24,7 +20,7 @@ def experiment_params():
         'feedback_hgru_mely',
         'feedback_hgru_fs',
         'feedback_hgru_fs_mely',
-        'hgru_bn'
+        'hgru_bn',
     ]
     exp['validation_period'] = [2000]
     exp['validation_steps'] = [625]
@@ -32,7 +28,7 @@ def experiment_params():
     exp['shuffle_train'] = [True]
     exp['save_checkpoints'] = [1]
     exp['save_activities'] = [False]
-    exp['save_weights'] = [False]
+    exp['save_weights'] = [True]
     exp['save_gradients'] = [False]
 
     # Model hyperparameters
@@ -45,22 +41,26 @@ def experiment_params():
     exp['epochs'] = [32]
 
     # Augmentations specified in lists of lists
-    exp['train_augmentations'] = [[
-        'grayscale',
-        'resize',
-        # 'left_right',
-        # 'up_down',
-        'uint8_rescale',
-        'singleton',
-        'zero_one'
-    ]]
-    exp['val_augmentations'] = [[
-        'grayscale',
-        'resize',
-        # 'left_right',
-        # 'up_down',
-        'uint8_rescale',
-        'singleton',
-        'zero_one'
-    ]]
+    exp['train_augmentations'] = [
+        [
+            'grayscale',
+            'resize',
+            # 'left_right',
+            # 'up_down',
+            'uint8_rescale',
+            'singleton',
+            'zero_one',
+        ]
+    ]
+    exp['val_augmentations'] = [
+        [
+            'grayscale',
+            'resize',
+            # 'left_right',
+            # 'up_down',
+            'uint8_rescale',
+            'singleton',
+            'zero_one',
+        ]
+    ]
     return exp

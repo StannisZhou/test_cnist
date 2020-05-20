@@ -169,8 +169,7 @@ def save_progress(
 
     joblib.dump(
         dict(
-            experiment_id=config._id,
-            experiment=config.experiment,
+            config=config,
             train_score=float(train_score),
             train_loss=float(train_loss),
             val_score=float(val_score),
@@ -179,7 +178,7 @@ def save_progress(
             num_params=int(num_params),
             ckpt_path=ckpt_path,
             results_path=config.results,
-            summary_path=directories['summaries'],
+            directories=directories,
         ),
         os.path.join(directories['checkpoints'], 'model_info_%s.joblib' % step),
         compress=3,
